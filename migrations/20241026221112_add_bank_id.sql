@@ -1,0 +1,2 @@
+ALTER TABLE transactions ADD COLUMN bank_id INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE transactions ADD CONSTRAINT fk_bank_id FOREIGN KEY (bank_id) REFERENCES banks(id);
