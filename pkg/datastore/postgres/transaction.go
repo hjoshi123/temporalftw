@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/hjoshi123/temporal-loan-app/internal/database"
 	"github.com/hjoshi123/temporal-loan-app/internal/logging"
-	"github.com/hjoshi123/temporal-loan-app/pkg/constants"
 	datastoreIface "github.com/hjoshi123/temporal-loan-app/pkg/datastore/interface"
 	"github.com/hjoshi123/temporal-loan-app/pkg/models/postgres"
 	"github.com/volatiletech/null/v8"
@@ -19,11 +18,11 @@ func NewTransactionStore() datastoreIface.TransactionStore {
 	return &transactionPostgres{}
 }
 
-func (t *transactionPostgres) SaveTransaction(ctx context.Context, transaction *models.Transaction, transactionType string) error {
+func (t *transactionPostgres) SaveTransaction(ctx context.Context, transaction *models.Transaction, transactionType, transactionStatus string) error {
 	db := database.Connect(ctx)
 
 	txType, err := models.TransactionTypes(
-		qm.Where(fmt.Sprintf("%s = %s", models.TransactionTypeColumns.Name, transactionType)),
+		qm.Where(fmt.Sprintf("%s = ?", models.TransactionTypeColumns.Name), transactionType),
 	).One(ctx, db)
 	if err != nil {
 		logging.FromContext(ctx).Errorw("failed to get transaction type", "error", err)
@@ -31,7 +30,7 @@ func (t *transactionPostgres) SaveTransaction(ctx context.Context, transaction *
 	}
 
 	status, err := models.TransactionStatuses(
-		qm.Where(fmt.Sprintf("%s = %s", models.TransactionStatusColumns.Name, constants.TransactionStatusPending)),
+		qm.Where(fmt.Sprintf("%s = ?", models.TransactionStatusColumns.Name), transactionStatus),
 	).One(ctx, db)
 	if err != nil {
 		logging.FromContext(ctx).Errorw("failed to get transaction status", "error", err)
@@ -40,7 +39,7 @@ func (t *transactionPostgres) SaveTransaction(ctx context.Context, transaction *
 
 	transaction.TransactionStatusID = status.ID
 	transaction.TransactionTypeID = txType.ID
-	err = transaction.Insert(ctx, db, boil.Infer())
+	err = transaction.Upsert(ctx, db, true, []string{models.TransactionColumns.TransactionID}, boil.Infer(), boil.Infer())
 	if err != nil {
 		logging.FromContext(ctx).Errorw("failed to save transaction", "error", err)
 		return err

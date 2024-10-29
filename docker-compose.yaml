@@ -8,10 +8,40 @@ services:
       - "postgres"
       - "-c"
       - "log_statement=all"
+    expose:
+      - 5432
     environment:
       - POSTGRES_USER=dev
       - POSTGRES_PASSWORD=dev124342
       - POSTGRES_DB=temporalLoan
+    networks:
+      - temporal-network
+  temporalftw:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: app
+    ports:
+      - "8081:8081"
+    env_file: .env
+    depends_on:
+      - postgres
+      - temporal
+      - temporal-ui
+    networks:
+      - temporal-network
+  temporalftw_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    env_file: .env
+    depends_on:
+      - postgres
+      - temporal
+      - temporal-ui
+    networks:
+      - temporal-network
   opensearch:
     container_name: temporal-opensearch
     environment:
@@ -22,11 +52,14 @@ services:
       - cluster.routing.allocation.disk.watermark.high=256mb
       - cluster.routing.allocation.disk.watermark.flood_stage=128mb
       - plugins.security.disabled=true
-    image: opensearchproject/opensearch:${OPENSEARCH_VERSION}
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=0P3nS543arch
+    image: opensearchproject/opensearch:latest
     ulimits:
       nofile:
         soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536
         hard: 65536
+    networks:
+      - temporal-network
     expose:
       - 9200
     volumes:
@@ -40,14 +73,19 @@ services:
       - DB=postgres12
       - DB_PORT=5432
       - POSTGRES_USER=dev
+      - BIND_ON_IP=0.0.0.0
       - POSTGRES_PWD=dev124342
       - POSTGRES_SEEDS=postgres
       - ENABLE_ES=true
       - ES_SEEDS=opensearch
       - ES_VERSION=v7
     image: temporalio/auto-setup:latest
+    expose:
+      - 7233
     ports:
       - "7233:7233"
+    networks:
+      - temporal-network
   temporal-admin-tools:
     container_name: temporal-admin-tools
     depends_on:
@@ -58,6 +96,8 @@ services:
     image: temporalio/admin-tools:latest
     stdin_open: true
     tty: true
+    networks:
+      - temporal-network
   temporal-ui:
     container_name: temporal-ui
     depends_on:
@@ -68,3 +108,10 @@ services:
     image: temporalio/ui:latest
     ports:
       - "8080:8080"
+    networks:
+      - temporal-network
+
+networks:
+  temporal-network:
+    driver: bridge
+    name: temporal-network

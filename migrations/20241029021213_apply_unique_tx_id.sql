@@ -1,0 +1,1 @@
+ALTER TABLE transactions ADD CONSTRAINT transactions_tx_id_unique UNIQUE (transaction_id);

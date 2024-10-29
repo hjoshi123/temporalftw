@@ -6,7 +6,10 @@ import (
 	"github.com/hjoshi123/temporal-loan-app/internal/config"
 	"github.com/hjoshi123/temporal-loan-app/internal/database"
 	"github.com/hjoshi123/temporal-loan-app/internal/logging"
+	"github.com/hjoshi123/temporal-loan-app/internal/server"
+	"github.com/rs/cors"
 	"github.com/spf13/cobra"
+	"net/http"
 	"os"
 )
 
@@ -60,6 +63,19 @@ func RunAPIServer(cmd *cobra.Command, args []string) error {
 			logging.FromContext(ctx).Fatalw("failed to apply migrations", "error", err)
 			return err
 		}
+	}
+
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+		AllowCredentials: true,
+	})
+
+	httpMux := server.Setup()
+
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", config.Spec.Port), c.Handler(httpMux)); err != nil {
+		logging.FromContext(ctx).Fatalw("failed to start server", "error", err)
+		return err
 	}
 
 	return nil

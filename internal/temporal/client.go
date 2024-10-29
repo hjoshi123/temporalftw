@@ -2,11 +2,14 @@ package temporal
 
 import (
 	"context"
+	"github.com/hjoshi123/temporal-loan-app/internal/config"
 	"github.com/hjoshi123/temporal-loan-app/internal/logging"
 	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/converter"
+	"go.temporal.io/sdk/temporal"
+	"go.temporal.io/sdk/workflow"
 	"go.uber.org/zap"
 	zapadapter "logur.dev/adapter/zap"
+	"time"
 
 	"logur.dev/logur"
 )
@@ -15,13 +18,8 @@ func GetTemporalClient(ctx context.Context) (client.Client, error) {
 	logger := logur.LoggerToKV(zapadapter.New(logging.FromContext(ctx).Desugar()))
 
 	clientOptions := client.Options{
-		Logger: logger,
-		DataConverter: converter.NewCompositeDataConverter(
-			converter.NewNilPayloadConverter(),
-			converter.NewByteSlicePayloadConverter(),
-			converter.NewProtoJSONPayloadConverter(),
-			converter.NewProtoPayloadConverter(),
-		),
+		HostPort: config.Spec.TemporalHostPort,
+		Logger:   logger,
 	}
 
 	sdkClient, err := client.Dial(clientOptions)
@@ -32,4 +30,18 @@ func GetTemporalClient(ctx context.Context) (client.Client, error) {
 	}
 
 	return sdkClient, nil
+}
+
+func SetCommonActivityOptions(ctx workflow.Context) workflow.Context {
+	ctx = workflow.WithLocalActivityOptions(ctx, workflow.LocalActivityOptions{
+		ScheduleToCloseTimeout: time.Second * 10,
+	})
+
+	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+		StartToCloseTimeout: time.Second * 30,
+		RetryPolicy: &temporal.RetryPolicy{
+			MaximumAttempts: 5,
+		},
+	})
+	return ctx
 }

@@ -1,6 +1,10 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"fmt"
+	"github.com/spf13/viper"
+	"reflect"
+)
 
 const (
 	DevelopmentEnvironment = "development"
@@ -8,13 +12,15 @@ const (
 )
 
 type Configuration struct {
-	DBHost      string `mapstructure:"db_host"`
-	DBPort      string `mapstructure:"db_port"`
-	DBUser      string `mapstructure:"db_user"`
-	DBName      string `mapstructure:"db_name"`
-	DBPassword  string `mapstructure:"db_password"`
-	LogLevel    string `mapstructure:"log_level"`
-	Environment string `mapstructure:"environment"`
+	DBHost           string `mapstructure:"DB_HOST"`
+	DBPort           string `mapstructure:"DB_PORT"`
+	DBUser           string `mapstructure:"DB_USER"`
+	DBName           string `mapstructure:"DB_NAME"`
+	DBPassword       string `mapstructure:"DB_PASSWORD"`
+	LogLevel         string `mapstructure:"LOG_LEVEL"`
+	Environment      string `mapstructure:"ENVIRONMENT"`
+	Port             int    `mapstructure:"PORT"`
+	TemporalHostPort string `mapstructure:"TEMPORAL_HOST_PORT"`
 }
 
 var Spec *Configuration
@@ -26,14 +32,39 @@ func IsDevelopment() bool {
 func init() {
 	Spec = new(Configuration)
 
-	viper.SetConfigType("env")
-	viper.AddConfigPath(".")
-	viper.SetConfigName(".env")
-	viper.AutomaticEnv()
-	err := viper.ReadInConfig()
+	v := viper.New()
+
+	v.AutomaticEnv()
+	v.AddConfigPath(".")
+	v.SetConfigType("env")
+
+	err := v.ReadInConfig()
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error reading config file, %s", err)
 	}
 
-	err = viper.Unmarshal(&Spec)
+	bindEnvs(v, Spec)
+
+	err = v.Unmarshal(&Spec)
+}
+
+func bindEnvs(vip *viper.Viper, iFace interface{}) {
+	ifv := reflect.ValueOf(iFace)
+	if ifv.Kind() == reflect.Ptr {
+		ifv = ifv.Elem()
+	}
+
+	for i := 0; i < ifv.NumField(); i++ {
+		v := ifv.Field(i)
+		t := ifv.Type().Field(i)
+		tv, ok := t.Tag.Lookup("mapstructure")
+		if !ok {
+			continue
+		}
+
+		switch v.Kind() {
+		default:
+			vip.BindEnv(tv, tv)
+		}
+	}
 }

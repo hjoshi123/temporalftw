@@ -1,7 +1,8 @@
-h1:bewfAN8w4V9mNXY3AVb0VIW2OtaOCXSadWvJEYT8Mgk=
+h1:Jq1TV0qNDVQYiViboKtCxRzii+90gyemXKVzJGn+Wv8=
 20241026164656_init_temporal_loan_app.sql h1:1aTfAiILavVolMRonIWww04W2GSPm0/oticOfiw69Mk=
 20241026210442_add_transactions_table.sql h1:W1Bc+I3O9nFCismiJiXHnHc489RiLfsFJezVEI50hBs=
 20241026212034_alter_account_balance.sql h1:72pwhyuhI/3q4M6OQoF3NDikAjHBe8/Qh3i1faRBGC8=
 20241026221112_add_bank_id.sql h1:svlDbyU7VRF5W9uDc9CKSXgQGSiy+eIIywlR1kHdg+o=
 20241026225441_add_bank_from_tx.sql h1:iQTvk2m8G95FS9WbPeu52ee6nLAUxOIHGNI86z6Olb4=
 20241027164859_add_tx_id.sql h1:V6W5+wlgNXLiSCnC4Ky0/TmclvVxT7Xi6XZdV7iJI5Q=
+20241029021213_apply_unique_tx_id.sql h1:o1CccNabFqtuD7P8idCKb657nWX9PXl6bzBLm8jmf9A=

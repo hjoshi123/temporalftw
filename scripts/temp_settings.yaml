@@ -1,0 +1,13 @@
+services:
+  frontend:
+    rpc:
+      bindOnIP: '0.0.0.0'
+  matching:
+    rpc:
+      bindOnIP: '0.0.0.0'
+  history:
+    rpc:
+      bindOnIP: '0.0.0.0'
+  worker:
+    rpc:
+      bindOnIP: '0.0.0.0'
